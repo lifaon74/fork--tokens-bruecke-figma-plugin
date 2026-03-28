@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.11.0](https://github.com/tokens-bruecke/figma-plugin/compare/v2.10.0...v2.11.0) (2026-03-28)
+
+
+### Features
+
+* split collections into separate files on export ([2e7fcff](https://github.com/tokens-bruecke/figma-plugin/commit/2e7fcffa1f65b37a42c1410f5e79a0403d340b5a)), closes [#17](https://github.com/tokens-bruecke/figma-plugin/issues/17)
+
+
+### Miscellaneous
+
+* remove trailing whitespace in release.yml ([a3340cc](https://github.com/tokens-bruecke/figma-plugin/commit/a3340cc815a522dcc84f40ba40dd90395c45c647))
+* update README and bump version to 2.11.0 ([9b3a332](https://github.com/tokens-bruecke/figma-plugin/commit/9b3a3325dab53c1852ff2914f98ef587bdee791d))
+
 ## [2.10.0](https://github.com/tokens-bruecke/figma-plugin/compare/v2.9.4...v2.10.0) (2026-03-28)
 
 

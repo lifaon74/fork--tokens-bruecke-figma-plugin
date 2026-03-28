@@ -11,7 +11,7 @@ export const normilizeType = (
         if (variableScopes[0] === 'FONT_WEIGHT') {
           return 'string';
         } else if (variableScopes[0] === 'OPACITY') {
-          return usePercentageOpacity ? 'dimension' : 'number';
+          return usePercentageOpacity ? 'string' : 'number';
         }
       }
       return 'dimension';

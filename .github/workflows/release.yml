@@ -1,44 +1,29 @@
 on:
   push:
-    branches:
-      - main
-name: release-please
-permissions: {}
+    tags:
+      - 'v*'
+name: release
+permissions:
+  contents: write
+  packages: write
 jobs:
-  release-please:
-    permissions:
-      contents: write # to create release commit (google-github-actions/release-please-action)
-      pull-requests: write # to create release PR (google-github-actions/release-please-action)
-      statuses: write
-      issues: write
-      packages: write # to create NPM package under github registry
-
+  release:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: googleapis/release-please-action@v4
-        id: release
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        if: ${{ steps.release.outputs.release_created }}
 
       - name: Get pnpm store directory
-        if: ${{ steps.release.outputs.release_created }}
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
-        if: ${{ steps.release.outputs.release_created }}
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -47,33 +32,22 @@ jobs:
 
       - name: Install Node.js
         uses: actions/setup-node@v4
-        if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: 'lts/*'
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Build package
-        run: pnpm install && pnpm run build
-        if: ${{ steps.release.outputs.release_created }}
+        run: pnpm run build
 
-      - name: Check if zip exists
-        if: ${{ steps.release.outputs.release_created }}
-        run: ls -la ./dist/
-
-      - name: Upload Release Artifact
-        if: ${{ steps.release.outputs.release_created }}
-        run: gh release upload ${{ steps.release.outputs.tag_name }} ./dist/figma-plugin.zip --clobber
+      - name: Create GitHub release
+        run: gh release create ${{ github.ref_name }} ./dist/figma-plugin.zip --title "${{ github.ref_name }}" --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish on Github registry
-        run: pnpm publish
+      - name: Publish to npm
+        run: pnpm publish --no-git-checks --access public
         env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        if: ${{ steps.release.outputs.release_created && github.repository == 'tokens-bruecke/figma-plugin'}}
-
-      # - name: Publish on npm
-      #   run: pnpm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-      #   if: ${{ steps.release.outputs.release_created && github.repository == 'tokens-bruecke/figma-plugin'}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

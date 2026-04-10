@@ -55,6 +55,24 @@ const getTokenDescription = (token: any): string => {
 };
 
 /**
+ * Parses DTCG or standard token format to extract the scopes
+ */
+const getTokenScopes = (token: any): VariableScope[] | undefined => {
+  // Standard format uses scopes
+  if (token.scopes !== undefined && Array.isArray(token.scopes)) {
+    return token.scopes;
+  }
+  // DTCG format uses $extensions
+  if (
+    token.$extensions?.scopes !== undefined &&
+    Array.isArray(token.$extensions.scopes)
+  ) {
+    return token.$extensions.scopes;
+  }
+  return undefined;
+};
+
+/**
  * Checks if an object is a token (has value and type)
  */
 const isToken = (obj: any): boolean => {
@@ -220,7 +238,8 @@ const extractTokens = (
       key.startsWith('$') ||
       key === 'value' ||
       key === 'type' ||
-      key === 'description'
+      key === 'description' ||
+      key === 'scopes'
     ) {
       continue; // Skip metadata keys
     }
@@ -395,6 +414,7 @@ export const tokensToVariables = async (
           try {
             const tokenType = getTokenType(token);
             const tokenDescription = getTokenDescription(token);
+            const tokenScopes = getTokenScopes(token);
 
             if (!tokenType) {
               result.errors.push(`Token at path "${path}" is missing type`);
@@ -416,14 +436,20 @@ export const tokensToVariables = async (
                 figmaType
               );
 
-              if (tokenDescription) {
-                variable.description = tokenDescription;
-              }
-
               variableMap.set(fullPath, variable);
               result.variablesCreated++;
             } else if (isExisting) {
               result.variablesUpdated++;
+            }
+
+            if (variable) {
+              if (tokenDescription) {
+                variable.description = tokenDescription;
+              }
+
+              if (tokenScopes) {
+                variable.scopes = tokenScopes;
+              }
             }
 
             // Store for second pass (value setting)
